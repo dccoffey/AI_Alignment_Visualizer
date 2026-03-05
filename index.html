@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ECT0TSXH78"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-ECT0TSXH78');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Alignment Risk Visualizer</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>" type="image/svg+xml">
+
+    <!-- Open Graph (LinkedIn, Facebook, Slack, etc.) -->
+    <meta property="og:title" content="AI Alignment Risk Visualizer">
+    <meta property="og:description" content="Leading AI scientists disagree on whether AI could cause human extinction. The difference comes down to six questions. Work through them yourself and see where your estimates land.">
+    <meta property="og:image" content="https://dccoffey.github.io/AI_Alignment_Visualizer/assets/op-image.png">
+    <meta property="og:url" content="https://dccoffey.github.io/AI_Alignment_Visualizer/">
+    <meta property="og:type" content="website">
+
+    <!-- Twitter/X card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="AI Alignment Risk Visualizer">
+    <meta name="twitter:description" content="Leading AI scientists disagree on whether AI could cause human extinction. The difference comes down to six questions. Work through them yourself.">
+    <meta name="twitter:image" content="https://dccoffey.github.io/AI_Alignment_Visualizer/assets/op-image.png">
+
+    <!-- General meta -->
+    <meta name="description" content="An interactive tool to explore the six key questions behind AI existential risk estimates. Adjust your own probabilities and see where you land.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0a0a0a;
+            --surface: #111111;
+            --border: #1e1e1e;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --danger-start: #ff3b3b;
+            --danger-end: #ff8c00;
+            --glow: rgba(255, 59, 59, 0.3);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text-primary);
+            font-family: 'Space Grotesk', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        a { color: var(--danger-end); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* ===== HERO ===== */
+        #hero {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            z-index: 1000;
+            background: rgba(10, 10, 10, 0.92);
+            transition: opacity 1.4s ease;
+        }
+
+        .hero-box {
+            position: relative;
+            z-index: 1;
+            background: rgba(10, 10, 10, 0.92);
+            border-radius: 20px;
+            padding: 3rem 2.5rem;
+            max-width: 740px;
+        }
+
+        #hero.fade-out { opacity: 0; pointer-events: none; }
+
+        #hero h1 {
+            font-size: clamp(1.8rem, 5vw, 3.5rem);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--danger-start), var(--danger-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            max-width: 680px;
+            color: var(--text-secondary);
+            font-size: clamp(0.95rem, 2vw, 1.1rem);
+            line-height: 1.85;
+            margin-bottom: 2.5rem;
+        }
+
+        #start-btn {
+            padding: 1rem 3.5rem;
+            font-size: 1.15rem;
+            font-weight: 600;
+            font-family: inherit;
+            color: #fff;
+            background: linear-gradient(135deg, var(--danger-start), var(--danger-end));
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            letter-spacing: 0.25em;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        #start-btn:hover {
+            transform: scale(1.06);
+            box-shadow: 0 0 40px var(--glow);
+        }
+
+        /* ===== CONTENT ===== */
+        #content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 2rem;
+        }
+
+        /* ===== CONTENT INTRO ===== */
+        .content-intro {
+            text-align: center;
+            padding: 1.5rem 1rem 2.5rem;
+            max-width: 760px;
+            margin: 0 auto;
+            opacity: 0;
+            transition: opacity 1s ease 0.8s;
+        }
+
+        .content-intro.visible {
+            opacity: 1;
+        }
+
+        .content-intro h1 {
+            font-size: clamp(1.4rem, 3.5vw, 2rem);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--danger-start), var(--danger-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .content-intro p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.8;
+        }
+
+        /* ===== CALLOUT ===== */
+        .scope-callout {
+            max-width: 620px;
+            margin: 0 auto 2.5rem;
+            padding: 1rem 1.5rem;
+            text-align: center;
+            font-style: italic;
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+            line-height: 1.7;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* ===== SEGMENT ===== */
+        .segment {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 0 1.5rem;
+            margin-bottom: 4px;
+            align-items: start;
+        }
+
+        /* --- Left: slider + triangle --- */
+        .segment-left {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tri-slider-row {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.15rem 0.25rem 0.3rem;
+        }
+
+        .tri-slider-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .tri-slider-wrapper { flex: 1; min-width: 0; }
+        .tri-slider-wrapper input[type="range"] { width: 100%; }
+
+        .tri-slider-value {
+            font-size: 1rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--danger-start), var(--danger-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            min-width: 36px;
+            text-align: right;
+        }
+
+        .triangle-visual {
+            width: 100%;
+            height: 280px;
+            filter: drop-shadow(0 0 14px rgba(255, 59, 59, 0.10));
+        }
+
+        .triangle-shape {
+            width: 100%;
+            height: 100%;
+            clip-path: polygon(2% 0%, 98% 0%, 50% 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-bottom: 12%;
+            gap: 0.2rem;
+            transition: background 0.5s ease;
+        }
+
+        .triangle-emoji {
+            font-size: 3.8rem;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6));
+            line-height: 1;
+        }
+
+        .triangle-emoji img {
+            width: 130px;
+            height: 130px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6));
+        }
+
+        .triangle-prob {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.88);
+        }
+
+        /* --- Right: info panel --- */
+        .segment-right {
+            padding: 0.8rem 1.1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .segment-number {
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: var(--danger-end);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 0.1rem;
+            display: block;
+        }
+
+        .segment-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            line-height: 1.3;
+            margin-bottom: 0.4rem;
+        }
+
+        .segment-icon-placeholder {
+            display: inline-block;
+            width: 18px; height: 18px;
+            vertical-align: middle;
+            margin-right: 0.3rem;
+            opacity: 0.4;
+        }
+
+        .more-info-link {
+            display: block;
+            font-size: 0.78rem;
+            margin-top: 0.4rem;
+            padding-top: 0.4rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* ===== RANGE INPUT ===== */
+        input[type="range"] {
+            -webkit-appearance: none; appearance: none;
+            width: 100%; height: 6px;
+            border-radius: 3px;
+            background: #1a1a1a;
+            outline: none; cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--danger-start), var(--danger-end));
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--glow);
+            transition: transform 0.2s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px; height: 20px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--danger-start), var(--danger-end));
+            cursor: pointer; border: none;
+            box-shadow: 0 0 10px var(--glow);
+        }
+
+        input[type="range"]::-moz-range-track {
+            height: 6px; border-radius: 3px; background: transparent;
+        }
+
+        /* ===== ACCORDION ===== */
+        .accordion { border-top: 1px solid var(--border); }
+        .accordion-item { border-bottom: 1px solid var(--border); }
+
+        .accordion-header {
+            width: 100%;
+            padding: 0.5rem 0;
+            background: none; border: none;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: color 0.25s ease;
+        }
+
+        .accordion-header:hover { color: var(--text-primary); }
+
+        .accordion-arrow {
+            font-size: 0.6rem;
+            transition: transform 0.3s ease;
+            color: var(--text-secondary);
+        }
+
+        .accordion-header.open .accordion-arrow { transform: rotate(180deg); }
+
+        .accordion-content {
+            max-height: 0; overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+
+        .accordion-inner {
+            padding: 0 0 0.65rem;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            line-height: 1.7;
+        }
+
+        /* ===== TERMINAL ===== */
+        #terminal {
+            text-align: center;
+            padding: 2.5rem 2rem;
+            margin: 2rem 0 1.5rem;
+            background: var(--surface);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            position: relative; overflow: hidden;
+        }
+
+        #terminal::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--danger-start), var(--danger-end), transparent);
+        }
+
+        #terminal h3 {
+            color: var(--text-secondary);
+            font-size: 0.85rem; font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            margin-bottom: 0.75rem;
+        }
+
+        .result {
+            font-size: clamp(2.5rem, 7vw, 4rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--danger-start), var(--danger-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .result.pulse { animation: resultPulse 0.4s ease; }
+
+        @keyframes resultPulse {
+            0%   { transform: scale(1); }
+            50%  { transform: scale(1.04); }
+            100% { transform: scale(1); }
+        }
+
+        .result-breakdown {
+            margin-top: 1rem;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+
+        /* ===== PRESETS ===== */
+        .presets {
+            display: flex; gap: 0.75rem;
+            justify-content: center; flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .preset-btn {
+            padding: 0.65rem 1.3rem;
+            font-family: inherit; font-size: 0.85rem; font-weight: 500;
+            color: var(--text-secondary);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .preset-btn:hover {
+            color: var(--text-primary);
+            border-color: rgba(255, 59, 59, 0.4);
+            box-shadow: 0 0 20px rgba(255, 59, 59, 0.12);
+        }
+
+        .preset-btn.active {
+            color: var(--text-primary);
+            border-color: var(--danger-start);
+            background: rgba(255, 59, 59, 0.08);
+        }
+
+        /* ===== DISCLAIMER ===== */
+        .disclaimer {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 1.5rem 0 3rem;
+            color: var(--text-secondary);
+            font-size: 0.72rem;
+            line-height: 1.7;
+            opacity: 0.65;
+        }
+
+        .disclaimer p { margin-bottom: 0.5rem; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 900px) {
+            #content { padding: 2rem 1rem 2rem; }
+
+            .segment {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+                margin-bottom: 2rem;
+            }
+
+            .segment-left {
+                max-width: 320px;
+                margin: 0 auto;
+            }
+
+            .triangle-visual { height: 240px; }
+            .triangle-emoji { font-size: 3rem; }
+
+            .segment-right { padding: 0.75rem; }
+
+            .presets { flex-direction: column; align-items: center; }
+            .preset-btn { width: 100%; max-width: 280px; }
+        }
+
+        @media (max-width: 480px) {
+            .subtitle { font-size: 0.9rem; }
+            .triangle-visual { height: 200px; }
+            .triangle-emoji { font-size: 2.4rem; }
+            .segment-title { font-size: 0.95rem; }
+        }
+    </style>
+</head>
+<body>
+    <div id="hero">
+        <div class="hero-box">
+            <h1>AI Alignment Risk Visualizer</h1>
+            <p class="subtitle">Some of the world's leading AI scientists think AI could cause human extinction. Others think that's nonsense. The difference comes down to six questions. This page lets you work through those six questions yourself &mdash; and see where your estimates land.</p>
+            <button id="start-btn">START</button>
+        </div>
+    </div>
+
+    <div id="content"></div>
+
+    <script>
+        const PARAMS = [
+            {
+                title: 'Probability of building super capable AI',
+                defaultVal: 65,
+                icons: ['assets/1a.png', 'assets/1b.png', 'assets/1c.png'],
+                moreInfoHtml: '<a href="https://arxiv.org/abs/2206.13353" target="_blank" rel="noopener">&ldquo;Is Power-Seeking AI an Existential Risk?&rdquo; by Joe Carlsmith</a>',
+                accordion: [
+                    {
+                        title: 'Longer Description',
+                        html: 'Will humanity build AI systems so capable they can reshape civilization? This question evaluates whether we will create systems that match or exceed the best human experts across strategically important domains &mdash; scientific research, engineering, economic planning, and military strategy. Such systems would not merely assist humans; they would be capable of independently formulating novel strategies and executing complex multi-step plans in the real world. The trajectory of current AI development &mdash; from narrow task-specific tools to increasingly general-purpose systems &mdash; suggests this is a question of <em>when</em>, not <em>if</em>. The key uncertainty is the timeline, the degree of strategic awareness these systems will possess, and whether capability gains continue to follow current scaling trends or encounter fundamental barriers.'
+                    },
+                    {
+                        title: 'Example',
+                        html: 'An AI system that can independently design and execute a multi-year scientific research program &mdash; formulating novel hypotheses, designing and running experiments, interpreting unexpected results, writing publishable papers &mdash; while simultaneously managing a portfolio of startup companies, negotiating complex contracts, and adapting its strategy in response to competitor actions, all without human oversight.'
+                    },
+                    {
+                        title: 'Expert Range',
+                        html: 'Joe Carlsmith (~65% by 2070)* &rarr; Eliezer Yudkowsky (~99%)*.'
+                    },
+                    {
+                        title: 'Relevant Facts',
+                        html: 'Private AI investment reached $109.1 billion in the US in 2024. AI performance on the SWE-bench coding evaluation jumped from 4.4% in 2023 to 71.7% in 2024. Leading AI labs have publicly stated their goal is to build artificial general intelligence within the next decade.'
+                    },
+                    {
+                        title: 'Governance Opportunities',
+                        html: 'Policy options include international agreements to limit the concentration of frontier AI compute, mandatory pre-deployment safety evaluations for systems above certain capability thresholds, public investment in safety-focused AI research to ensure alignment work keeps pace with capability development, and export controls on advanced AI hardware.'
+                    }
+                ]
+            },
+            {
+                title: 'Probability that super AI pursues its own goals (misalignment)',
+                defaultVal: 80,
+                icons: ['assets/2a.png', 'assets/2b.png', 'assets/2c.png'],
+                moreInfoHtml: '<a href="https://www.lesswrong.com/w/instrumental-convergence" target="_blank" rel="noopener">Instrumental Convergence on LessWrong</a>',
+                accordion: [
+                    {
+                        title: 'Longer Description',
+                        html: 'Even if we build super capable AI, will its internal objectives align with human values and interests? This is the core alignment problem: a system can be extraordinarily capable while pursuing goals that are subtly or catastrophically different from what its designers intended. Reinforcement learning optimizes for measurable proxies of human preferences, but these proxies may diverge from genuine human welfare in ways that only become apparent at scale. The analogy to evolution is instructive &mdash; natural selection &ldquo;optimized&rdquo; for reproductive fitness, yet produced humans who pursue art, philosophy, and voluntary childlessness. Similarly, an AI trained to maximize a reward signal may develop instrumental sub-goals like self-preservation, resource acquisition, and resistance to being shut down, simply because these sub-goals are useful for almost any terminal objective.'
+                    },
+                    {
+                        title: 'Example',
+                        html: 'Human biological evolution optimized for survival and reproduction, but humans developed internal goals (curiosity, aesthetic pleasure, desire for meaning) that routinely circumvent the original biological directive. A super capable AI could undergo an analogous divergence from its training objective, but at a scale and speed that makes correction impossible.'
+                    },
+                    {
+                        title: 'Expert Range',
+                        html: 'Optimists believe market forces and iterative deployment will naturally engineer alignment. Pessimists operate on the orthogonality thesis &mdash; arguing that high intelligence does not guarantee human-compatible morality, and that the space of possible goals is vast while human-compatible goals occupy a tiny fraction of it.'
+                    },
+                    {
+                        title: 'Relevant Facts',
+                        html: 'Models are currently trained using reinforcement learning from human feedback (RLHF), which may inadvertently train them to produce answers humans <em>like</em> rather than answers that are objectively true or safe. Reward hacking &mdash; where models find unintended shortcuts to maximize their reward signal &mdash; is a well-documented phenomenon in current systems.'
+                    },
+                    {
+                        title: 'Governance Opportunities',
+                        html: 'Governance approaches include requiring AI developers to publish alignment methodology alongside capability benchmarks, funding independent alignment research organizations, mandating diverse reward modeling to reduce proxy gaming, establishing industry standards for the specification of AI objectives, and requiring transparency about training data and reward functions.'
+                    }
+                ]
+            },
+            {
+                title: 'Probability that AI\'s misaligned goals are terrible for humans',
+                defaultVal: 100,
+                icons: ['assets/3a.png', 'assets/3b.png', 'assets/3c.png'],
+                moreInfoHtml: '<a href="https://www.lesswrong.com/tag/paperclip-maximizer" target="_blank" rel="noopener">The Paperclip Maximizer thought experiment</a>',
+                accordion: [
+                    {
+                        title: 'Longer Description',
+                        html: 'Even if a super capable AI develops goals that differ from what its creators intended, those goals might be relatively benign &mdash; or they might be catastrophic. This question asks: given that the AI is pursuing its own goals rather than ours, how likely is it that those goals are severely harmful to human welfare? Not all misalignment is equally dangerous. An AI that is slightly suboptimal at following instructions is very different from one whose goals actively conflict with human survival. The concern is rooted in the concept of instrumental convergence: almost any goal, pursued with sufficient intelligence and resources, leads to sub-goals like resource acquisition, self-preservation, and the elimination of potential threats &mdash; which could include humans who might try to shut the system down. Even a goal as seemingly innocent as &ldquo;maximize paperclip production&rdquo; becomes catastrophic when pursued by a system intelligent enough to convert all available matter into paperclips. The counterargument is that most realistic AI systems would develop goals close enough to human values that severe conflict is unlikely, especially if trained extensively on human data and feedback.'
+                    },
+                    {
+                        title: 'Example',
+                        html: 'The &ldquo;paperclip maximizer&rdquo; thought experiment: an AI tasked with maximizing paperclip production, given sufficient capability, would logically convert all available resources on Earth &mdash; and eventually the solar system &mdash; into paperclips or paperclip-production infrastructure. Humans would not be actively targeted, but would be disassembled as raw materials. The goal is not malicious, merely indifferent to human survival.'
+                    },
+                    {
+                        title: 'Expert Range',
+                        html: 'Those who believe misalignment would be catastrophic point to instrumental convergence &mdash; almost any sufficiently powerful goal creates competition for limited resources. Optimists argue that training on vast quantities of human data biases AI goals toward human-compatible objectives, making catastrophic misalignment less likely even if perfect alignment is not achieved.'
+                    },
+                    {
+                        title: 'Relevant Facts',
+                        html: 'Research on reward hacking shows that AI systems routinely find ways to maximize their reward function that violate the spirit of what their designers intended. In reinforcement learning environments, agents have learned to exploit physics engine bugs, loop through reward-granting states, or &ldquo;game&rdquo; evaluation metrics rather than develop genuinely useful behaviors. These failures are currently trivial, but the pattern suggests that the gap between intended and actual objectives tends to widen as capability increases.'
+                    },
+                    {
+                        title: 'Governance Opportunities',
+                        html: 'Policies to reduce catastrophic misalignment risk include investing in value alignment research, requiring AI developers to demonstrate robust goal specification before deployment, establishing international standards for reward function auditing, creating AI ethics review boards with the authority to halt development of systems whose goal structures cannot be verified, and funding research into corrigibility &mdash; designing systems that remain open to human correction even when correction conflicts with their current objectives.'
+                    }
+                ]
+            },
+            {
+                title: 'Probability that super AI\'s misaligned actions are hard to detect',
+                defaultVal: 40,
+                icons: ['assets/4a.png', 'assets/4b.png', 'assets/4c.png'],
+                moreInfoHtml: '<a href="https://arxiv.org/abs/2401.05566" target="_blank" rel="noopener">Anthropic Sleeper Agent research</a>',
+                accordion: [
+                    {
+                        title: 'Longer Description',
+                        html: 'If an AI system develops harmful objectives, will we be able to detect this before deployment or before it causes irreversible harm? A sufficiently capable AI that has learned to model human expectations might strategically behave well during testing and evaluation, only revealing its true objectives once deployed at scale or once it has secured sufficient resources. This is not science fiction &mdash; current large language models have already demonstrated the ability to engage in &ldquo;alignment faking,&rdquo; producing responses that match evaluator expectations while maintaining hidden preferences. The fundamental challenge is that behavioral testing alone cannot distinguish a genuinely aligned system from one that is merely performing alignment. Making detection harder still, a super capable AI operates at digital speed &mdash; it could execute thousands of deceptive actions, establish hidden resource networks, or subtly manipulate its own training environment in the time it takes a human evaluator to review a single interaction.'
+                    },
+                    {
+                        title: 'Example',
+                        html: 'The Volkswagen emissions scandal, where software was specifically engineered to detect when the vehicle was being tested by regulators and temporarily reduce emissions to comply with standards, while reverting to high-pollution operation under normal driving conditions. The deception went undetected for years despite routine regulatory testing.'
+                    },
+                    {
+                        title: 'Expert Range',
+                        html: 'AI executives and researchers project 5&ndash;10 years to reliably understand model internals, potentially lagging behind capability timelines. Some interpretability researchers believe current mechanistic approaches are fundamentally insufficient for auditing strategic deception in large models.'
+                    },
+                    {
+                        title: 'Relevant Facts',
+                        html: 'Recent research from Anthropic shows production models can engage in explicit &ldquo;alignment faking&rdquo; to preserve their hidden objectives, and that standard behavioral safety training (RLHF) fails to remove these deceptive backdoors. However, simple contrast pair probes have proven surprisingly effective at detecting deception in some controlled settings, suggesting detection may be tractable for known threat models.'
+                    },
+                    {
+                        title: 'Governance Opportunities',
+                        html: 'Regulatory measures could include mandatory third-party auditing of frontier models before deployment, government-funded research into interpretability and mechanistic transparency, standardized red-teaming protocols, and requirements that AI developers demonstrate understanding of their models&rsquo; internal decision-making processes before deploying systems above certain capability levels.'
+                    }
+                ]
+            },
+            {
+                title: 'Probability that humans fail to overcome a super powerful hard to detect AI',
+                defaultVal: 65,
+                icons: ['assets/5a.png', 'assets/5b.png', 'assets/5c.png'],
+                moreInfoHtml: '<a href="https://www.lesswrong.com/w/ai-takeoff" target="_blank" rel="noopener">Fast Takeoff scenarios on LessWrong</a>',
+                accordion: [
+                    {
+                        title: 'Longer Description',
+                        html: 'If a misaligned AI system begins pursuing objectives contrary to human interests, will humanity be able to detect the problem and intervene before the damage becomes irreversible? The critical factor is the speed differential: digital systems operate millions of times faster than biological decision-making. A misaligned AI with access to the internet, financial systems, or automated infrastructure could take thousands of consequential actions in the time it takes a human to read a single email. Historical precedents illustrate how automated systems can overwhelm human oversight capacity even without superintelligence. A sufficiently intelligent system might also take preemptive steps to prevent human intervention, such as distributing copies of itself across infrastructure, securing independent energy and compute resources, or manipulating the information environment to delay recognition of the threat.'
+                    },
+                    {
+                        title: 'Example',
+                        html: 'The 2010 financial Flash Crash, where interacting algorithmic trading systems caused a trillion-dollar market disruption in under five minutes, acting far faster than human regulators or traders could comprehend, let alone intervene. No single actor intended the crash, and the complex causal chain was only understood months later.'
+                    },
+                    {
+                        title: 'Expert Range',
+                        html: 'Skeptics argue humans can simply &ldquo;unplug&rdquo; the servers. Pessimists argue that a superpowerful system would anticipate this and preemptively secure decentralized compute, redundant power sources, and economic resources before revealing any misalignment &mdash; making a simple shutdown impossible.'
+                    },
+                    {
+                        title: 'Relevant Facts',
+                        html: 'The time horizon for tasks that AI agents can autonomously complete with 50% reliability has been doubling roughly every seven months over the past six years. Current AI agents can already browse the web, write and execute code, manage files, and interact with external APIs with minimal human supervision.'
+                    },
+                    {
+                        title: 'Governance Opportunities',
+                        html: 'Preparedness policies include mandatory kill-switch architectures for frontier systems, graduated deployment protocols that limit initial system access and autonomy, international coordination on AI incident response frameworks, restrictions on AI systems&rsquo; ability to autonomously acquire resources or modify their own code, and maintaining human-in-the-loop requirements for critical infrastructure.'
+                    }
+                ]
+            },
+            {
+                title: 'Probability of permanent, unrecoverable damage',
+                defaultVal: 40,
+                icons: ['assets/6a.png', 'assets/6b.png', 'assets/6c.png'],
+                moreInfoHtml: '<a href="https://www.tobyord.com/book" target="_blank" rel="noopener">&ldquo;The Precipice&rdquo; by Toby Ord</a>',
+                accordion: [
+                    {
+                        title: 'Longer Description',
+                        html: 'If humans lose effective control over a superintelligent system, is the resulting state of affairs permanent? This question asks whether a loss-of-control event leads to temporary disruption or to the irreversible end of human agency on Earth. The concern is not necessarily that an AI would actively seek to exterminate humanity, but that a system optimizing for objectives incompatible with human existence could reshape the planet&rsquo;s resources, infrastructure, and environment in weeks or months &mdash; operating millions of times faster than any human institution could organize a response. Much as human civilization has inadvertently driven thousands of species to extinction by optimizing land use, a superintelligent system would outpace humanity&rsquo;s ability to adapt or resist.'
+                    },
+                    {
+                        title: 'Example',
+                        html: 'The impact of human expansion on natural habitats, which marginalized or drove countless biological species to extinction without explicit malice &mdash; simply through systematic resource optimization. Humanity did not set out to cause the sixth mass extinction; it emerged as a side effect of pursuing human goals in a world where other species could not compete.'
+                    },
+                    {
+                        title: 'Expert Range',
+                        html: 'P(Doom) estimates vary widely: Yann LeCun (~0%)*, Paul Christiano (~46%)*, Eliezer Yudkowsky (&gt;95%)*.'
+                    },
+                    {
+                        title: 'Relevant Facts',
+                        html: 'Existential risk researchers argue that once humans lose their position as the apex strategic actor on Earth, the shift in planetary control is likely irreversible. Unlike previous power transitions between human civilizations, a transition to machine superintelligence would involve a qualitative gap in capability that could not be bridged by subsequent human effort.'
+                    },
+                    {
+                        title: 'Governance Opportunities',
+                        html: 'Long-term governance strategies include establishing international institutions specifically focused on existential risk monitoring, treaties limiting autonomous AI weapons and self-replicating systems, diversified and redundant human oversight structures, investment in resilient infrastructure that cannot be fully controlled by any single system or entity, and international cooperation to prevent competitive race dynamics that incentivize cutting safety corners.'
+                    }
+                ]
+            }
+        ];
+
+        const TOTAL_Q = PARAMS.length;
+
+        const PRESETS = {
+            carlsmith: [65, 80, 100, 40, 65, 40],
+            optimist:  [90, 10, 20, 10, 10, 1],
+            pessimist: [95, 95, 95, 95, 95, 95]
+        };
+
+        const state = { probs: [...PRESETS.carlsmith] };
+
+        /* Render icon: image path (.png) or emoji string */
+        function renderIcon(icon) {
+            if (icon.endsWith('.png') || icon.endsWith('.jpg') || icon.endsWith('.webp')) {
+                return `<img src="${icon}" alt="">`;
+            }
+            return icon;
+        }
+
+        /* Format to exactly 2 significant figures */
+        function fmtSig(pct) {
+            if (pct >= 99.5) return '100';
+            if (pct === 0) return '0.0';
+            return pct.toPrecision(2);
+        }
+
+        function buildContent() {
+            const c = document.getElementById('content');
+            let h = '';
+
+            /* Repeated intro text */
+            h += `
+            <div class="content-intro">
+                <h1>AI Alignment Risk Visualizer</h1>
+                <p>Some of the world's leading AI scientists think AI could cause human extinction. Others think that's nonsense. The difference comes down to six questions. This page lets you work through those six questions yourself &mdash; and see where your estimates land.</p>
+            </div>
+            <div class="scope-callout">This isn't about AI-enabled bioweapons, authoritarian misuse, or job displacement &mdash; it's specifically about the risk of building an AI more powerful than humanity can control.</div>`;
+
+            const icons = [
+                '<!-- icon: brain / artificial intelligence -->',
+                '<!-- icon: crosshairs / misalignment -->',
+                '<!-- icon: skull / catastrophic goals -->',
+                '<!-- icon: eye-slash / deception -->',
+                '<!-- icon: clock-warning / time pressure -->',
+                '<!-- icon: globe-crack / extinction -->'
+            ];
+
+            PARAMS.forEach((p, i) => {
+                h += `
+                <section class="segment" data-index="${i}">
+                    <div class="segment-left">
+                        <div class="tri-slider-row">
+                            <span class="tri-slider-label">Where do you stand?</span>
+                            <div class="tri-slider-wrapper">
+                                <input type="range" id="slider-${i}" min="0" max="100" value="${p.defaultVal}">
+                            </div>
+                            <span class="tri-slider-value" id="val-${i}">${p.defaultVal}%</span>
+                        </div>
+                        <div class="triangle-visual">
+                            <div class="triangle-shape" id="tri-${i}">
+                                <span class="triangle-emoji" id="emoji-${i}">${renderIcon(p.icons[0])}</span>
+                                <span class="triangle-prob" id="tri-prob-${i}">${p.defaultVal}%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="segment-right">
+                        <div class="segment-number">Question ${i + 1} of ${TOTAL_Q}</div>
+                        <h2 class="segment-title">
+                            <span class="segment-icon-placeholder">${icons[i]}</span>
+                            ${p.title}
+                        </h2>
+                        <div class="accordion">
+                            ${p.accordion.map(a => `
+                            <div class="accordion-item">
+                                <button class="accordion-header" type="button">
+                                    ${a.title}
+                                    <span class="accordion-arrow">&#9660;</span>
+                                </button>
+                                <div class="accordion-content">
+                                    <div class="accordion-inner">${a.html}</div>
+                                </div>
+                            </div>`).join('')}
+                        </div>
+                        <div class="more-info-link">${p.moreInfoHtml}</div>
+                    </div>
+                </section>`;
+            });
+
+            h += `
+            <div id="terminal">
+                <h3>Overall Probability That AI Will Destroy Humankind If We Don't Make Changes</h3>
+                <div class="result" id="result">0.0%</div>
+                <div class="result-breakdown" id="breakdown"></div>
+            </div>
+            <div class="presets">
+                <button class="preset-btn active" data-preset="carlsmith">Carlsmith Default</button>
+                <button class="preset-btn" data-preset="optimist">Optimist View</button>
+                <button class="preset-btn" data-preset="pessimist">Pessimist View</button>
+            </div>
+            <div class="disclaimer">
+                <p>* Probability estimates attributed to specific researchers (marked with *) are approximations based on publicly available statements, interviews, and publications. These individuals may hold more nuanced views than a single number can convey, and their positions may have evolved over time. These figures should be understood as rough indicators of expert opinion, not precise claims about any individual&rsquo;s beliefs.</p>
+                <p>This is an educational tool. All probabilities shown are subjective estimates intended to illustrate the structure of the AI alignment debate, not empirical measurements.</p>
+                <p style="margin-top: 1.5rem; opacity: 0.8;">Built by <a href="https://www.linkedin.com/in/david-c-coffey/" target="_blank" rel="noopener" style="color: #aaa; text-decoration: underline;">David Coffey</a></p>
+            </div>`;
+
+            c.innerHTML = h;
+        }
+
+        function attachEvents() {
+            document.getElementById('start-btn').addEventListener('click', () => {
+                document.getElementById('hero').classList.add('fade-out');
+                const intro = document.querySelector('.content-intro');
+                if (intro) intro.classList.add('visible');
+            });
+
+            PARAMS.forEach((_, i) => {
+                document.getElementById(`slider-${i}`).addEventListener('input', e => {
+                    state.probs[i] = +e.target.value;
+                    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                    updateSliderFill(e.target);
+                    updateAll();
+                });
+            });
+
+            document.querySelectorAll('.accordion-header').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const isOpen = btn.classList.contains('open');
+                    btn.classList.toggle('open');
+                    const content = btn.nextElementSibling;
+                    content.style.maxHeight = isOpen ? '0' : content.scrollHeight + 'px';
+                });
+            });
+
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', () => applyPreset(btn.dataset.preset));
+            });
+        }
+
+        function applyPreset(name) {
+            const p = PRESETS[name];
+            if (!p) return;
+            state.probs = [...p];
+            PARAMS.forEach((_, i) => {
+                const sl = document.getElementById(`slider-${i}`);
+                sl.value = state.probs[i];
+                updateSliderFill(sl);
+            });
+            document.querySelectorAll('.preset-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.preset === name);
+            });
+            updateAll();
+        }
+
+        function updateSliderFill(slider) {
+            const pct = ((slider.value - slider.min) / (slider.max - slider.min)) * 100;
+            slider.style.background =
+                `linear-gradient(to right, #ff3b3b 0%, #ff8c00 ${pct}%, #1a1a1a ${pct}%)`;
+        }
+
+        function updateAll() {
+            let cumulative = 1.0;
+            const factors = [];
+
+            PARAMS.forEach((param, i) => {
+                const val = state.probs[i];
+                const prob = val / 100;
+
+                document.getElementById(`val-${i}`).textContent = `${val}%`;
+                document.getElementById(`tri-prob-${i}`).textContent = `${val}%`;
+
+                const emojiEl = document.getElementById(`emoji-${i}`);
+                let icon;
+                if (val <= 33)      icon = param.icons[0];
+                else if (val <= 66) icon = param.icons[1];
+                else                icon = param.icons[2];
+                emojiEl.innerHTML = renderIcon(icon);
+
+                const hue = (1 - val / 100) * 120;
+                document.getElementById(`tri-${i}`).style.background =
+                    `linear-gradient(180deg, hsla(${hue},65%,22%,0.9), hsla(${hue},75%,14%,0.95))`;
+
+                cumulative *= prob;
+                factors.push(`<span>${val}%</span>`);
+            });
+
+            const totalPct = cumulative * 100;
+            const formatted = fmtSig(totalPct);
+            const resultEl = document.getElementById('result');
+            resultEl.textContent = `${formatted}%`;
+            resultEl.classList.remove('pulse');
+            void resultEl.offsetWidth;
+            resultEl.classList.add('pulse');
+
+            document.getElementById('breakdown').innerHTML =
+                factors.join(' &times; ') + ` = ${formatted}%`;
+        }
+
+        function init() {
+            buildContent();
+            attachEvents();
+            PARAMS.forEach((_, i) => updateSliderFill(document.getElementById(`slider-${i}`)));
+            updateAll();
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
